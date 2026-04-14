@@ -23,9 +23,8 @@ const List<String> suggestedQuestions = [
 ];
 
 /// GitHub Releases URL for the default GGUF model (gemma-3-1b Q4_K_M ~726MB).
-/// TODO: Update this URL with the actual GitHub repo after the release is created.
 const String defaultModelUrl =
-    'https://github.com/user/smart-bible/releases/download/v1.0.0/gemma-3-1b-it-Q4_K_M.gguf';
+    'https://github.com/brcassiano/smart-bible/releases/download/v1.0.0/gemma-3-1b-it-Q4_K_M.gguf';
 
 const String defaultModelFileName = 'gemma-3-1b-it-Q4_K_M.gguf';
 
