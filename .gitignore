@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Data - raw repos (large, cloned from source)
+data/raw/
+
+# SQLite WAL files
+*.db-shm
+*.db-wal
+
+# Flutter
+smart_bible/.dart_tool/
+smart_bible/build/
+smart_bible/.flutter-plugins
+smart_bible/.flutter-plugins-dependencies
+smart_bible/.packages
+smart_bible/.pub-cache/
+smart_bible/.pub/
+smart_bible/ios/
+smart_bible/android/.gradle/
+smart_bible/android/app/build/
+smart_bible/android/build/
+smart_bible/android/local.properties
+
+# Generated Dart files
+*.g.dart
+*.freezed.dart
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# GGUF models (too large for git, use GitHub Releases)
+*.gguf
+
+# Claude
+.claude/

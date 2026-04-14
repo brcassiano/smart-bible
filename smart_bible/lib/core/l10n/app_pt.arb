@@ -1,0 +1,87 @@
+{
+  "@@locale": "pt",
+  "appTitle": "Smart Bible",
+  "@appTitle": {
+    "description": "Nome do aplicativo"
+  },
+  "homeTitle": "Início",
+  "@homeTitle": {
+    "description": "Título da tela inicial"
+  },
+  "readerTitle": "Leitor Bíblico",
+  "@readerTitle": {
+    "description": "Título da tela do leitor"
+  },
+  "wordStudyTitle": "Estudo de Palavras",
+  "@wordStudyTitle": {
+    "description": "Título da tela de estudo de palavras"
+  },
+  "aiChatTitle": "Assistente IA",
+  "@aiChatTitle": {
+    "description": "Título da tela do chat com IA"
+  },
+  "loading": "Carregando...",
+  "@loading": {
+    "description": "Texto de carregamento"
+  },
+  "errorGeneric": "Ocorreu um erro",
+  "@errorGeneric": {
+    "description": "Mensagem de erro genérica"
+  },
+  "oldTestament": "Antigo Testamento",
+  "@oldTestament": {
+    "description": "Nome do Antigo Testamento"
+  },
+  "newTestament": "Novo Testamento",
+  "@newTestament": {
+    "description": "Nome do Novo Testamento"
+  },
+  "selectBook": "Selecionar Livro",
+  "@selectBook": {
+    "description": "Botão de seleção de livro"
+  },
+  "selectChapter": "Selecionar Capítulo",
+  "@selectChapter": {
+    "description": "Botão de seleção de capítulo"
+  },
+  "selectTranslation": "Selecionar Tradução",
+  "@selectTranslation": {
+    "description": "Botão de seleção de tradução"
+  },
+  "search": "Buscar",
+  "@search": {
+    "description": "Texto de busca"
+  },
+  "searchHint": "Buscar versículos...",
+  "@searchHint": {
+    "description": "Dica do campo de busca"
+  },
+  "noResults": "Nenhum resultado encontrado",
+  "@noResults": {
+    "description": "Mensagem quando não há resultados"
+  },
+  "strongsNumber": "Número Strong",
+  "@strongsNumber": {
+    "description": "Rótulo do número Strong"
+  },
+  "hebrew": "Hebraico",
+  "@hebrew": {
+    "description": "Idioma hebraico"
+  },
+  "greek": "Grego",
+  "@greek": {
+    "description": "Idioma grego"
+  },
+  "definition": "Definição",
+  "@definition": {
+    "description": "Rótulo de definição"
+  },
+  "shortDefinition": "Definição breve",
+  "@shortDefinition": {
+    "description": "Rótulo de definição breve"
+  },
+  "fullDefinition": "Definição completa",
+  "@fullDefinition": {
+    "description": "Rótulo de definição completa"
+  }
+}

@@ -1,0 +1,57 @@
+name: smart_bible
+description: "Smart Bible - Estudo bíblico inteligente com IA local"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # Database
+  drift: ^2.22.1
+  sqlite3_flutter_libs: ^0.5.28
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+  # UI
+  google_fonts: ^6.2.1
+  intl: any
+
+  # Networking & storage
+  http: ^1.2.2
+  shared_preferences: ^2.3.3
+
+  # Utilities
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  equatable: ^2.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.14
+  drift_dev: ^2.22.1
+  riverpod_generator: ^2.6.3
+  freezed: ^2.5.8
+  json_serializable: ^6.9.4
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/databases/
