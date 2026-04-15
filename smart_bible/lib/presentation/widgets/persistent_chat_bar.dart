@@ -89,79 +89,91 @@ class _PersistentChatBarState extends ConsumerState<PersistentChatBar> {
 
     if (messages.isNotEmpty) _scrollToBottom();
 
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Stack(
       children: [
-        widget.child,
-        DraggableScrollableSheet(
-          controller: _sheetController,
-          initialChildSize: _collapsedSize,
-          minChildSize: _collapsedSize,
-          maxChildSize: _maxSize,
-          snap: true,
-          snapSizes: const [_collapsedSize, _expandedSize, _maxSize],
-          builder: (context, scrollController) {
-            return Material(
-              elevation: 8,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Column(
-                children: [
-                  // Drag handle
-                  _DragHandle(scrollController: scrollController),
-                  // Chat messages area (visible when expanded)
-                  Expanded(
-                    child: messages.isEmpty
-                        ? _SuggestedQuestions(
-                            onSelected: (q) {
-                              _inputController.text = q;
-                              _sendMessage(q);
-                            },
-                          )
-                        : _MessageList(
-                            messages: messages,
-                            scrollController: _messagesScrollController,
-                          ),
-                  ),
-                  // Status cards
-                  if (modelStatus.status == ModelStatus.notDownloaded)
-                    _ModelDownloadCard(
-                      onDownload: () {
-                        ref
-                            .read(modelStatusNotifierProvider.notifier)
-                            .startDownload()
-                            .listen((_) {});
-                      },
+        // Push app content up when keyboard is open and sheet is expanded
+        Padding(
+          padding: EdgeInsets.only(bottom: _collapsedSize * MediaQuery.of(context).size.height),
+          child: widget.child,
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: bottomInset,
+          top: 0,
+          child: DraggableScrollableSheet(
+            controller: _sheetController,
+            initialChildSize: _collapsedSize,
+            minChildSize: _collapsedSize,
+            maxChildSize: _maxSize,
+            snap: true,
+            snapSizes: const [_collapsedSize, _expandedSize, _maxSize],
+            builder: (context, scrollController) {
+              return Material(
+                elevation: 8,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
+                child: Column(
+                  children: [
+                    // Drag handle
+                    _DragHandle(scrollController: scrollController),
+                    // Chat messages area (visible when expanded)
+                    Expanded(
+                      child: messages.isEmpty
+                          ? _SuggestedQuestions(
+                              onSelected: (q) {
+                                _inputController.text = q;
+                                _sendMessage(q);
+                              },
+                            )
+                          : _MessageList(
+                              messages: messages,
+                              scrollController: _messagesScrollController,
+                            ),
                     ),
-                  if (modelStatus.status == ModelStatus.downloading)
-                    _DownloadProgressBar(
-                      state: modelStatus,
-                      onCancel: () {
-                        ref
-                            .read(modelStatusNotifierProvider.notifier)
-                            .cancelDownload();
-                      },
+                    // Status cards
+                    if (modelStatus.status == ModelStatus.notDownloaded)
+                      _ModelDownloadCard(
+                        onDownload: () {
+                          ref
+                              .read(modelStatusNotifierProvider.notifier)
+                              .startDownload()
+                              .listen((_) {});
+                        },
+                      ),
+                    if (modelStatus.status == ModelStatus.downloading)
+                      _DownloadProgressBar(
+                        state: modelStatus,
+                        onCancel: () {
+                          ref
+                              .read(modelStatusNotifierProvider.notifier)
+                              .cancelDownload();
+                        },
+                      ),
+                    if (modelStatus.status == ModelStatus.error)
+                      _DownloadErrorCard(
+                        errorMessage: modelStatus.errorMessage ??
+                            'Erro desconhecido ao carregar o modelo.',
+                        onRetry: () {
+                          ref
+                              .read(modelStatusNotifierProvider.notifier)
+                              .retryDownload();
+                        },
+                      ),
+                    // Input bar always visible at bottom
+                    _InputBar(
+                      controller: _inputController,
+                      isStreaming: _isStreaming,
+                      modelReady: modelStatus.status == ModelStatus.ready,
+                      onSend: _sendMessage,
                     ),
-                  if (modelStatus.status == ModelStatus.error)
-                    _DownloadErrorCard(
-                      errorMessage: modelStatus.errorMessage ??
-                          'Erro desconhecido ao carregar o modelo.',
-                      onRetry: () {
-                        ref
-                            .read(modelStatusNotifierProvider.notifier)
-                            .retryDownload();
-                      },
-                    ),
-                  // Input bar always visible at bottom
-                  _InputBar(
-                    controller: _inputController,
-                    isStreaming: _isStreaming,
-                    modelReady: modelStatus.status == ModelStatus.ready,
-                    onSend: _sendMessage,
-                  ),
-                ],
-              ),
-            );
-          },
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ],
     );

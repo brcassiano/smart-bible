@@ -81,8 +81,7 @@ class _AiChatContentState extends ConsumerState<AiChatContent> {
 
     return Column(
       children: [
-        if (modelStatus.status == ModelStatus.ready)
-          _BetaBanner(),
+        // Model is ready — no banner needed
         Expanded(
           child: messages.isEmpty
               ? _SuggestedQuestions(
@@ -133,40 +132,6 @@ class _AiChatContentState extends ConsumerState<AiChatContent> {
 
 // ---------------------------------------------------------------------------
 // Beta banner
-// ---------------------------------------------------------------------------
-
-class _BetaBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: theme.colorScheme.tertiaryContainer,
-      child: Row(
-        children: [
-          Icon(
-            Icons.science_rounded,
-            size: 18,
-            color: theme.colorScheme.onTertiaryContainer,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Assistente IA em fase beta. A integração com o modelo de IA local '
-              'está sendo finalizada. Por enquanto, o assistente demonstra a '
-              'interface que será usada para estudos bíblicos.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onTertiaryContainer,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Suggested questions
 // ---------------------------------------------------------------------------
