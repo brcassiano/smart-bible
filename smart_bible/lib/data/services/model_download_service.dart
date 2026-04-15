@@ -96,6 +96,47 @@ class ModelDownloadService {
     );
   }
 
+  /// Sends a GET request following redirects manually (up to 5 hops).
+  /// The Dart http package does not follow redirects for streamed requests
+  /// when followRedirects is not properly handled (e.g. GitHub → Azure CDN).
+  Future<http.StreamedResponse> _sendWithRedirects(
+    http.Client client,
+    Uri url, {
+    Map<String, String>? headers,
+    int existingBytes = 0,
+  }) async {
+    var currentUrl = url;
+    for (var i = 0; i < 5; i++) {
+      final request = http.Request('GET', currentUrl);
+      if (headers != null) request.headers.addAll(headers);
+      if (existingBytes > 0) {
+        request.headers['Range'] = 'bytes=$existingBytes-';
+      }
+      request.followRedirects = false;
+
+      final response = await client.send(request).timeout(
+            const Duration(seconds: _connectionTimeoutSeconds),
+            onTimeout: () => throw TimeoutException(
+              'Conexão expirou após ${_connectionTimeoutSeconds}s.',
+            ),
+          );
+
+      if (response.statusCode == 301 ||
+          response.statusCode == 302 ||
+          response.statusCode == 307 ||
+          response.statusCode == 308) {
+        final location = response.headers['location'];
+        if (location == null) throw Exception('Redirect sem Location header');
+        currentUrl = Uri.parse(location);
+        await response.stream.drain<void>();
+        continue;
+      }
+
+      return response;
+    }
+    throw Exception('Muitos redirects');
+  }
+
   Stream<ModelDownloadProgress> _attemptDownload({
     required String url,
     required String fileName,
@@ -111,26 +152,21 @@ class ModelDownloadService {
       alreadyDownloaded = await file.length();
     }
 
+    yield ModelDownloadProgress(
+      status: ModelDownloadStatus.downloading,
+      bytesReceived: alreadyDownloaded,
+      totalBytes: kModelSizeBytes,
+      errorMessage: 'Iniciando download...',
+    );
+
     final client = http.Client();
     try {
-      final request = http.Request('GET', Uri.parse(url))
-        ..followRedirects = true
-        ..maxRedirects = 5
-        ..headers['Accept'] = 'application/octet-stream';
-
-      // Add Range header for resume support
-      if (alreadyDownloaded > 0) {
-        request.headers['Range'] = 'bytes=$alreadyDownloaded-';
-      }
-
-      final response = await client
-          .send(request)
-          .timeout(
-            const Duration(seconds: _connectionTimeoutSeconds),
-            onTimeout: () => throw TimeoutException(
-              'Conexão expirou após ${_connectionTimeoutSeconds}s.',
-            ),
-          );
+      final response = await _sendWithRedirects(
+        client,
+        Uri.parse(url),
+        headers: {'Accept': 'application/octet-stream'},
+        existingBytes: alreadyDownloaded,
+      );
 
       // 200 = full content, 206 = partial content (resume)
       if (response.statusCode == 404) {

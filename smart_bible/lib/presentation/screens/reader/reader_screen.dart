@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/bible_constants.dart';
-import '../../../core/utils/extensions.dart';
 import '../../../domain/entities/verse.dart';
 import '../../providers/bible_providers.dart';
 import '../../widgets/app_drawer.dart';
@@ -10,11 +9,32 @@ import 'widgets/chapter_selector.dart';
 import 'widgets/verse_study_sheet.dart';
 import 'widgets/verse_tile.dart';
 
-class ReaderScreen extends ConsumerWidget {
+class ReaderScreen extends ConsumerStatefulWidget {
   const ReaderScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ReaderScreen> createState() => _ReaderScreenState();
+}
+
+class _ReaderScreenState extends ConsumerState<ReaderScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(readerStateProvider, (prev, next) {
+      if (prev?.chapter != next.chapter || prev?.bookId != next.bookId) {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(0);
+        }
+      }
+    });
+
     final readerState = ref.watch(readerStateProvider);
     final book = kBibleBooks.firstWhere((b) => b.id == readerState.bookId);
     final translationsAsync = ref.watch(translationsProvider);
@@ -39,7 +59,17 @@ class ReaderScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${book.namePt} ${readerState.chapter}'),
+        title: GestureDetector(
+          onTap: () => _showBookPicker(context, ref),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('${book.namePt} ${readerState.chapter}'),
+              const SizedBox(width: 4),
+              const Icon(Icons.arrow_drop_down, size: 20),
+            ],
+          ),
+        ),
         actions: [
           InkWell(
             onTap: () => _showTranslationPicker(context, ref),
@@ -67,11 +97,6 @@ class ReaderScreen extends ConsumerWidget {
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.book_rounded),
-            tooltip: 'Selecionar livro',
-            onPressed: () => _showBookPicker(context, ref),
-          ),
         ],
       ),
       drawer: const AppDrawer(),
@@ -93,6 +118,7 @@ class ReaderScreen extends ConsumerWidget {
                   );
                 }
                 return ListView.builder(
+                  controller: _scrollController,
                   itemCount: verses.length,
                   itemBuilder: (context, index) {
                     final verse = verses[index];
@@ -170,45 +196,19 @@ class ReaderScreen extends ConsumerWidget {
   }
 
   void _showBookPicker(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet<void>(
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) => DraggableScrollableSheet(
+      builder: (context) => DraggableScrollableSheet(
         expand: false,
         initialChildSize: 0.7,
-        builder: (ctx, scrollController) => Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Selecionar Livro',
-                style: Theme.of(ctx).textTheme.titleLarge,
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                controller: scrollController,
-                itemCount: kBibleBooks.length,
-                itemBuilder: (ctx2, index) {
-                  final book = kBibleBooks[index];
-                  return ListTile(
-                    leading: Text(
-                      '${book.bookOrder}',
-                      style: Theme.of(ctx2).textTheme.bodySmall,
-                    ),
-                    title: Text(book.namePt),
-                    subtitle: Text(book.testament.labelPt),
-                    onTap: () {
-                      ref
-                          .read(readerStateProvider.notifier)
-                          .navigateTo(bookId: book.id, chapter: 1);
-                      Navigator.of(ctx2).pop();
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => _BookPickerContent(
+          currentBookId: ref.read(readerStateProvider).bookId,
+          onBookSelected: (bookId) {
+            ref.read(readerStateProvider.notifier).navigateTo(bookId: bookId, chapter: 1);
+            Navigator.pop(context);
+          },
         ),
       ),
     );
@@ -230,6 +230,124 @@ class ReaderScreen extends ConsumerWidget {
         bookName: bookName,
         translationAbbr: translationAbbr,
       ),
+    );
+  }
+}
+
+class _BookPickerContent extends StatefulWidget {
+  const _BookPickerContent({
+    required this.currentBookId,
+    required this.onBookSelected,
+  });
+
+  final int currentBookId;
+  final ValueChanged<int> onBookSelected;
+
+  @override
+  State<_BookPickerContent> createState() => _BookPickerContentState();
+}
+
+class _BookPickerContentState extends State<_BookPickerContent> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final otBooks = kBibleBooks.where((b) => b.testament == Testament.ot).toList();
+    final ntBooks = kBibleBooks.where((b) => b.testament == Testament.nt).toList();
+
+    final filteredOt = _searchQuery.isEmpty
+        ? otBooks
+        : otBooks
+            .where((b) => b.namePt.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .toList();
+    final filteredNt = _searchQuery.isEmpty
+        ? ntBooks
+        : ntBooks
+            .where((b) => b.namePt.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .toList();
+
+    return Column(
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          width: 40,
+          height: 4,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Buscar livro...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+            onChanged: (v) => setState(() => _searchQuery = v),
+          ),
+        ),
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _buildColumn('Antigo Testamento', filteredOt)),
+              const VerticalDivider(width: 1),
+              Expanded(child: _buildColumn('Novo Testamento', filteredNt)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildColumn(String title, List<BibleBook> books) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: books.length,
+            itemBuilder: (context, index) {
+              final book = books[index];
+              final isSelected = book.id == widget.currentBookId;
+              return ListTile(
+                dense: true,
+                title: Text(
+                  book.namePt,
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+                trailing: isSelected
+                    ? Icon(Icons.check, size: 18, color: Theme.of(context).colorScheme.primary)
+                    : null,
+                onTap: () => widget.onBookSelected(book.id),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

@@ -138,20 +138,6 @@ class ModelStatusNotifier extends _$ModelStatusNotifier {
 }
 
 // ---------------------------------------------------------------------------
-// Chat overlay visibility
-// ---------------------------------------------------------------------------
-
-@Riverpod(keepAlive: true)
-class ChatOverlayVisible extends _$ChatOverlayVisible {
-  @override
-  bool build() => false;
-
-  void toggle() => state = !state;
-  void show() => state = true;
-  void hide() => state = false;
-}
-
-// ---------------------------------------------------------------------------
 // Chat messages
 // ---------------------------------------------------------------------------
 
