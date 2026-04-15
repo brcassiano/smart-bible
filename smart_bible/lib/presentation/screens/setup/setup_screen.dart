@@ -16,22 +16,25 @@ class SetupScreen extends ConsumerStatefulWidget {
 class _SetupScreenState extends ConsumerState<SetupScreen> {
   bool _downloadStarted = false;
 
+  @override
+  void initState() {
+    super.initState();
+    // Start download automatically on screen load
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startDownload());
+  }
+
   Future<void> _markSetupDone() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('setup_completed', true);
   }
 
   Future<void> _startDownload() async {
+    if (_downloadStarted) return;
     setState(() => _downloadStarted = true);
     ref
         .read(modelStatusNotifierProvider.notifier)
         .startDownload()
         .listen((_) {});
-  }
-
-  Future<void> _skip() async {
-    await _markSetupDone();
-    if (mounted) context.go('/');
   }
 
   @override
@@ -72,33 +75,34 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'Bem-vindo ao Smart Bible!',
+                  'Preparando o Smart Bible',
                   style: theme.textTheme.titleLarge
                       ?.copyWith(fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Para uma experiência completa, precisamos baixar o modelo de IA (~769 MB).\n\n'
-                  'Isso só acontece uma vez e permite que o assistente funcione 100% offline.',
+                  'Estamos baixando o modelo de IA (~769 MB) para que o assistente funcione 100% offline.\n\n'
+                  'Isso só acontece uma vez. Por favor, mantenha o app aberto.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                if (!_downloadStarted) ...[
-                  FilledButton.icon(
-                    onPressed: _startDownload,
-                    icon: const Icon(Icons.download_rounded),
-                    label: const Text('Baixar modelo'),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48),
+                if (modelStatus.status == ModelStatus.downloading ||
+                    modelStatus.status == ModelStatus.notDownloaded) ...[
+                  _DownloadProgressSection(state: modelStatus),
+                ],
+                if (modelStatus.status == ModelStatus.loading) ...[
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Carregando modelo...',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                ],
-                if (modelStatus.status == ModelStatus.downloading) ...[
-                  _DownloadProgressSection(state: modelStatus),
                 ],
                 if (modelStatus.status == ModelStatus.error) ...[
                   _ErrorSection(
@@ -113,32 +117,17 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                     },
                   ),
                 ],
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'ou',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    const Expanded(child: Divider()),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: _skip,
-                  child: const Text('Pular e usar sem IA →'),
+                const SizedBox(height: 32),
+                Icon(
+                  Icons.wifi_rounded,
+                  size: 24,
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'O leitor e o Strong\'s funcionam sem o modelo',
+                  'Recomendamos usar Wi-Fi para o download',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                   ),
                   textAlign: TextAlign.center,
                 ),
